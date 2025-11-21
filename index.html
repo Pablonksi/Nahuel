@@ -1,171 +1,736 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Nahuel Deluxe</title>
+<meta charset="UTF-8" />
+<title>Nahuel Deluxe – Ultra Custom</title>
 <style>
   body {
     margin: 0;
     overflow: hidden;
-    background: #0a0a0a;
+    background: #050505;
     font-family: Arial, sans-serif;
     color: white;
     touch-action: none;
   }
+
+  /* HUD */
   #ui {
     position: absolute;
     top: 10px;
     left: 10px;
-    font-size: 22px;
+    font-size: 16px;
     display: none;
+    text-shadow: 0 0 6px rgba(0,0,0,0.7);
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.35);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.12);
   }
-  #timer {
-    margin-top: 8px;
+  #ui div {
+    margin-bottom: 3px;
   }
 
-  /* MENU */
-  #menu, #shop {
+  /* HUD size tweaks via body classes */
+  body.hud-small #ui {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+  body.hud-big #ui {
+    font-size: 19px;
+    padding: 10px 12px;
+  }
+
+  /* Pause & Home buttons */
+  #pauseBtn, #homeBtn {
     position: absolute;
-    width: 100%;
+    top: 10px;
+    padding: 6px 14px;
+    font-size: 14px;
+    border-radius: 6px;
+    background: #262626;
+    color: white;
+    border: 1px solid #555;
+    cursor: pointer;
+    display: none;
+    text-shadow: 0 0 4px rgba(0,0,0,0.7);
+  }
+  #pauseBtn { right: 10px; }
+  #homeBtn { left: 10px; top: 40px; }
+  #pauseBtn:hover, #homeBtn:hover {
+    background: #3a3a3a;
+  }
+
+  /* Level progress bar */
+  #levelBar {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.15);
+    overflow: hidden;
+    display: none;
+    box-shadow: 0 0 8px rgba(0,0,0,0.6);
+  }
+  #levelBarFill {
+    width: 0%;
     height: 100%;
-    background: #000;
+    background: linear-gradient(90deg, #00ff99, #00ccff);
+  }
+
+  /* Bottom hints */
+  #hints {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.5);
+    font-size: 12px;
+    text-shadow: 0 0 4px rgba(0,0,0,0.8);
+    display: none;
+  }
+
+  /* MENU / SHOP / SETTINGS / HOWTO */
+  #menu, #shop, #settings, #howto {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top, #333 0, #000 60%);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    text-align: center;
+  }
+  #menu h1, #shop h2, #settings h2, #howto h2 {
+    margin-bottom: 12px;
   }
   button {
-    padding: 12px 22px;
-    margin: 8px;
-    font-size: 20px;
+    padding: 10px 20px;
+    margin: 6px;
+    font-size: 16px;
     cursor: pointer;
-    border-radius: 6px;
-    background: #2a2a2a;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #262626, #1a1a1a);
     color: white;
-    border: none;
+    border: 1px solid #555;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.6);
+  }
+  button:hover {
+    background: linear-gradient(135deg, #3a3a3a, #262626);
+  }
+  .btn-small {
+    padding: 6px 10px;
+    font-size: 13px;
+    margin: 2px;
+    box-shadow: none;
+  }
+
+  /* Big button mode */
+  body.buttons-big button:not(.btn-small) {
+    font-size: 18px;
+    padding: 12px 24px;
+  }
+
+  .skin-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
   }
   .skin {
-    width: 60px;
-    height: 60px;
-    margin: 10px;
+    width: 55px;
+    height: 55px;
+    margin: 6px;
     display: inline-block;
     border: 3px solid white;
     cursor: pointer;
+    box-sizing: border-box;
+    border-radius: 50%;
+  }
+  #howto-text {
+    max-width: 360px;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 10px;
   }
 
-  /* MOBILE CONTROLS */
+  /* JOYSTICK */
   #controls {
     position: absolute;
-    bottom: 20px;
-    left: 20px;
+    bottom: 30px;
+    left: 30px;
     display: none;
+    user-select: none;
+    transform-origin: center;
   }
-  .btn {
+  #joystick-base {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.25);
+    position: relative;
+    touch-action: none;
+  }
+  #joystick-knob {
     width: 60px;
     height: 60px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 10px;
-    margin: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    border: 2px solid rgba(255,255,255,0.7);
+    position: absolute;
+    left: 35px;
+    top: 35px;
+    box-shadow: 0 0 15px rgba(255,255,255,0.35);
+  }
+
+  /* BOOSTER BUTTON */
+  #booster-btn {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,0,0.5) 0, rgba(255,255,0,0.15) 60%, transparent 100%);
+    border: 2px solid rgba(255,255,0,0.8);
+    display: none;
+    user-select: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: #fffbea;
+    box-shadow: 0 0 18px rgba(255,255,0,0.5);
+  }
+  #booster-btn.active {
+    box-shadow: 0 0 25px rgba(255,255,0,0.9);
+    background: radial-gradient(circle, rgba(255,255,0,0.9) 0, rgba(255,255,0,0.3) 60%, transparent 100%);
+  }
+
+  /* CENTER POPUP TEXT */
+  #center-text {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    text-shadow: 0 0 10px rgba(0,0,0,0.9);
+  }
+
+  /* Settings sections */
+  .settings-section {
+    margin: 6px 0;
   }
 </style>
 </head>
 <body>
 
-<!-- Canvas -->
 <canvas id="game"></canvas>
 
-<!-- UI -->
+<!-- HUD -->
 <div id="ui">
-  <div id="score">Score: 0</div>
-  <div id="timer">Time: 20</div>
-  <div id="level">Level: 1</div>
+  <div id="score">Total coins: 0</div>
+  <div id="level">Level: 1 / 10</div>
+  <div id="levelName">Mood: Calm Start</div>
+  <div id="levelCoins">Level coins: 0 / 4</div>
+  <div id="combo">Combo: x1</div>
+  <div id="boost">Boost: 100%</div>
+  <div id="shield">Shield: —</div>
 </div>
 
-<!-- MENU -->
+<button id="pauseBtn">Pause</button>
+<button id="homeBtn">Menu</button>
+
+<div id="levelBar">
+  <div id="levelBarFill"></div>
+</div>
+
+<div id="hints">
+  Move with joystick / WASD • ⚡ = boost • Menu to exit
+</div>
+
+<!-- CENTER TEXT -->
+<div id="center-text"></div>
+
+<!-- MAIN MENU -->
 <div id="menu">
   <h1>Nahuel Deluxe</h1>
+  <p>Beat 10 levels. Touch an enemy once and you’re sent back to Level 1.</p>
+  <p id="bestStats">Best run: Level 1 • 0 coins</p>
   <button onclick="startGame()">Start</button>
   <button onclick="openShop()">Shop</button>
+  <button onclick="openSettings()">Settings</button>
+  <button onclick="openHowto()">How to play</button>
 </div>
 
 <!-- SHOP -->
 <div id="shop" style="display:none;">
-  <h2>Choose a skin</h2>
-  <div>
+  <h2>Choose Nahuel's Skin</h2>
+  <div class="skin-row">
     <div class="skin" style="background:cyan;" onclick="selectSkin('cyan')"></div>
     <div class="skin" style="background:lime;" onclick="selectSkin('lime')"></div>
     <div class="skin" style="background:orange;" onclick="selectSkin('orange')"></div>
     <div class="skin" style="background:#ff66ff;" onclick="selectSkin('#ff66ff')"></div>
+    <div class="skin" style="background:#00ffff; box-shadow:0 0 10px #00ffff;" onclick="selectSkin('#00ffff')"></div>
+    <div class="skin" style="background:#ff4444; box-shadow:0 0 10px #ff4444;" onclick="selectSkin('#ff4444')"></div>
   </div>
   <button onclick="closeShop()">Back</button>
 </div>
 
-<!-- MOBILE TOUCH CONTROLS -->
-<div id="controls">
-  <div style="display:flex;">
-    <div class="btn" id="left"></div>
-    <div class="btn" id="right"></div>
+<!-- SETTINGS -->
+<div id="settings" style="display:none;">
+  <h2>Settings</h2>
+
+  <div class="settings-section">
+    <strong>Difficulty:</strong><br>
+    <button class="btn-small" onclick="setDifficulty('easy')">Easy</button>
+    <button class="btn-small" onclick="setDifficulty('normal')">Normal</button>
+    <button class="btn-small" onclick="setDifficulty('hard')">Hard</button>
   </div>
-  <div style="display:flex;margin-left:60px;">
-    <div class="btn" id="up"></div>
-    <div class="btn" id="down"></div>
+
+  <div class="settings-section">
+    <strong>Theme:</strong><br>
+    <button class="btn-small" onclick="setTheme('neon')">Neon</button>
+    <button class="btn-small" onclick="setTheme('classic')">Classic</button>
+    <button class="btn-small" onclick="setTheme('pastel')">Pastel</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>Music:</strong><br>
+    <button class="btn-small" onclick="setMusic(true)">On</button>
+    <button class="btn-small" onclick="setMusic(false)">Off</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>SFX:</strong><br>
+    <button class="btn-small" onclick="setSfx(true)">On</button>
+    <button class="btn-small" onclick="setSfx(false)">Off</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>Joystick size:</strong><br>
+    <button class="btn-small" onclick="setJoystickSize('small')">Small</button>
+    <button class="btn-small" onclick="setJoystickSize('medium')">Medium</button>
+    <button class="btn-small" onclick="setJoystickSize('large')">Large</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>Joystick side:</strong><br>
+    <button class="btn-small" onclick="setJoystickSide('left')">Left</button>
+    <button class="btn-small" onclick="setJoystickSide('right')">Right</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>Player size:</strong><br>
+    <button class="btn-small" onclick="setPlayerSize('small')">Small</button>
+    <button class="btn-small" onclick="setPlayerSize('normal')">Normal</button>
+    <button class="btn-small" onclick="setPlayerSize('big')">Big</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>Player shape:</strong><br>
+    <button class="btn-small" onclick="setPlayerShape('square')">Square</button>
+    <button class="btn-small" onclick="setPlayerShape('circle')">Circle</button>
+    <button class="btn-small" onclick="setPlayerShape('diamond')">Diamond</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>Visual effects:</strong><br>
+    <button class="btn-small" onclick="setEffects(true)">On</button>
+    <button class="btn-small" onclick="setEffects(false)">Off</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>Colorblind mode:</strong><br>
+    <button class="btn-small" onclick="setColorblind(true)">On</button>
+    <button class="btn-small" onclick="setColorblind(false)">Off</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>HUD size:</strong><br>
+    <button class="btn-small" onclick="setHudSize('small')">Small</button>
+    <button class="btn-small" onclick="setHudSize('normal')">Normal</button>
+    <button class="btn-small" onclick="setHudSize('big')">Big</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>Button size:</strong><br>
+    <button class="btn-small" onclick="setButtonSize('normal')">Normal</button>
+    <button class="btn-small" onclick="setButtonSize('big')">Big</button>
+  </div>
+
+  <div class="settings-section">
+    <strong>Hints:</strong><br>
+    <button class="btn-small" onclick="setHints(true)">On</button>
+    <button class="btn-small" onclick="setHints(false)">Off</button>
+  </div>
+
+  <button onclick="closeSettings()">Back</button>
+</div>
+
+<!-- HOW TO PLAY -->
+<div id="howto" style="display:none;">
+  <h2>How to play</h2>
+  <div id="howto-text">
+    • Move Nahuel with the joystick (or arrow keys/WASD).<br>
+    • Collect coins to fill the level bar and advance.<br>
+    • Mega coin (big cyan) = +3 coins & screen shake.<br>
+    • Red squares are enemies. Touch them = go back to Level 1.<br>
+    • Shield orb gives you one free hit.<br>
+    • Combo goes up if you grab coins quickly; high combo pulls coins toward you.<br>
+    • Hold ⚡ to boost your speed (drains boost, then it recharges).<br>
+    • Beat all 10 levels without dying to become Nahuel Legend.
+  </div>
+  <button onclick="closeHowto()">Back</button>
+</div>
+
+<!-- JOYSTICK -->
+<div id="controls">
+  <div id="joystick-base">
+    <div id="joystick-knob"></div>
   </div>
 </div>
 
+<!-- BOOSTER -->
+<div id="booster-btn">⚡</div>
+
 <script>
 /* ===========================
-      CANVAS + BASE SETUP
+     CANVAS + RESIZE
 =========================== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-canvas.width = innerWidth;
-canvas.height = innerHeight;
 
-let score = 0;
-let timeLeft = 20;
-let level = 1;
-let playerColor = "cyan"; // default skin
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
 
 /* ===========================
-      GAME OBJECTS
+      DOM ELEMENTS
 =========================== */
+const scoreEl = document.getElementById("score");
+const levelEl = document.getElementById("level");
+const levelNameEl = document.getElementById("levelName");
+const levelCoinsEl = document.getElementById("levelCoins");
+const comboEl = document.getElementById("combo");
+const boostEl = document.getElementById("boost");
+const shieldEl = document.getElementById("shield");
+const centerTextEl = document.getElementById("center-text");
+const boosterBtn = document.getElementById("booster-btn");
+const pauseBtn = document.getElementById("pauseBtn");
+const homeBtn = document.getElementById("homeBtn");
+const bestStatsEl = document.getElementById("bestStats");
+const levelBar = document.getElementById("levelBar");
+const levelBarFill = document.getElementById("levelBarFill");
+const hintsEl = document.getElementById("hints");
+
+/* ===========================
+      GAME STATE & CONFIG
+=========================== */
+const MAX_LEVEL = 10;
+
+const levelNames = [
+  "Calm Start",
+  "Warm-Up Speed",
+  "First Panic",
+  "Enemy Locked On",
+  "Double Trouble",
+  "Danger Zone",
+  "Sweaty Palms",
+  "Ultra Focus",
+  "Final Rush",
+  "Nahuel Legend"
+];
+
+const levelConfigs = Array.from({ length: MAX_LEVEL }, (_, i) => {
+  const level = i + 1;
+  return {
+    coinGoal: 3 + level,
+    enemySpeed: 3 + level * 0.4,
+    playerSpeed: 6 + level * 0.2,
+    coinSize: Math.max(10, 20 - level),
+    hue: (level * 28) % 360
+  };
+});
+
+let currentLevel = 1;
+let totalCoins = 0;
+let levelCoins = 0;
+let currentCoinGoal = 4;
+
+let gameActive = false;
+let loopStarted = false;
+let paused = false;
+
+let playerColor = "cyan";
+let playerShapeMode = "square";
+let playerSizeMode = "normal";
+let effectsEnabled = true;
+let colorblindMode = false;
+let joystickSide = "left";
+let hudSizeMode = "normal";
+let buttonSizeMode = "normal";
+let hintsEnabled = true;
+
 const player = {
-  x: canvas.width/2,
-  y: canvas.height/2,
+  x: canvas.width / 2,
+  y: canvas.height / 2,
   size: 30,
+  speed: 6,
   dx: 0,
-  dy: 0,
-  speed: 6
+  dy: 0
 };
 
-const coin = {
-  x: Math.random()*canvas.width,
-  y: Math.random()*canvas.height,
-  size: 20
-};
+const coin = { x: 0, y: 0, size: 16 };
+const megaCoin = { x: 0, y: 0, size: 26, active: false };
 
-const enemy = {
-  x: Math.random()*canvas.width,
-  y: Math.random()*canvas.height,
-  size: 35,
-  speed: 3
-};
+const enemy = { x: 0, y: 0, size: 35, speed: 3.3 };
+const enemy2 = { x: 0, y: 0, size: 30, speed: 3.5, active: false };
+
+const shieldOrb = { x: 0, y: 0, size: 18, active: false };
+let hasShield = false;
+
+const BOOST_MULT = 1.8;
+let boosting = false;
+let boostEnergy = 1;
+
+const particles = [];
+const trail = [];
+
+let overlayTimer = 0;
+let dangerFactor = 0;
+let shakeTimer = 0;
+
+let combo = 1;
+let lastCoinTime = 0;
+
+let difficultyMode = "normal";
+let themeMode = "neon";
+let musicEnabled = true;
+let sfxEnabled = true;
+let joystickSize = "medium";
+
+let bestLevel = 1;
+let bestCoins = 0;
 
 /* ===========================
-       MENU + SHOP
+          AUDIO
 =========================== */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let musicOsc = null;
+let musicGain = null;
+
+function initAudio() {
+  if (!AudioCtx) return;
+  if (!audioCtx) {
+    audioCtx = new AudioCtx();
+  }
+}
+
+function playBeep(freq, duration, type = "square", volume = 0.15) {
+  if (!sfxEnabled) return;
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.value = volume;
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  setTimeout(() => {
+    osc.stop();
+    osc.disconnect();
+  }, duration * 1000);
+}
+
+function startMusic() {
+  if (!audioCtx || musicOsc || !musicEnabled) return;
+  musicOsc = audioCtx.createOscillator();
+  musicGain = audioCtx.createGain();
+  musicOsc.type = "triangle";
+  musicOsc.frequency.value = 200 + currentLevel * 5;
+  musicGain.gain.value = 0.05;
+  musicOsc.connect(musicGain).connect(audioCtx.destination);
+  musicOsc.start();
+}
+
+function stopMusic() {
+  if (musicOsc) {
+    musicOsc.stop();
+    musicOsc.disconnect();
+    musicOsc = null;
+  }
+  if (musicGain) {
+    musicGain.disconnect();
+    musicGain = null;
+  }
+}
+
+/* ===========================
+      LOCAL STORAGE STATS
+=========================== */
+function loadBestStats() {
+  try {
+    const raw = localStorage.getItem("nahuelStats");
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    bestLevel = data.bestLevel || 1;
+    bestCoins = data.bestCoins || 0;
+  } catch (e) {}
+}
+
+function saveBestStats() {
+  try {
+    localStorage.setItem(
+      "nahuelStats",
+      JSON.stringify({ bestLevel, bestCoins })
+    );
+  } catch (e) {}
+}
+
+function updateBestStatsUI() {
+  bestStatsEl.textContent =
+    "Best run: Level " + bestLevel + " • " + bestCoins + " coins";
+}
+
+function recordRunEnd(level, coins) {
+  if (level > bestLevel || (level === bestLevel && coins > bestCoins)) {
+    bestLevel = level;
+    bestCoins = coins;
+    saveBestStats();
+    updateBestStatsUI();
+  }
+}
+
+/* ===========================
+       MENU / SHOP / SETTINGS
+=========================== */
+function applyPlayerSize() {
+  if (playerSizeMode === "small") player.size = 24;
+  else if (playerSizeMode === "big") player.size = 36;
+  else player.size = 30;
+}
+
+function applyLevelSettings() {
+  const base = levelConfigs[currentLevel - 1];
+
+  let goalMult = 1;
+  let enemyMult = 1;
+  let playerMult = 1;
+  if (difficultyMode === "easy") {
+    goalMult = 0.7;
+    enemyMult = 0.85;
+    playerMult = 1.1;
+  } else if (difficultyMode === "hard") {
+    goalMult = 1.4;
+    enemyMult = 1.25;
+    playerMult = 0.95;
+  }
+
+  currentCoinGoal = Math.max(2, Math.round(base.coinGoal * goalMult));
+  levelCoins = 0;
+
+  player.speed = base.playerSpeed * playerMult;
+  applyPlayerSize();
+
+  enemy.speed = base.enemySpeed * enemyMult;
+  enemy2.speed = (base.enemySpeed + 0.7) * enemyMult;
+
+  coin.size = base.coinSize;
+
+  scoreEl.textContent = "Total coins: " + totalCoins;
+  levelEl.textContent = "Level: " + currentLevel + " / " + MAX_LEVEL;
+  levelNameEl.textContent = "Mood: " + levelNames[currentLevel - 1];
+  levelCoinsEl.textContent =
+    "Level coins: " + levelCoins + " / " + currentCoinGoal;
+  updateLevelBar();
+}
+
+function resetPositions() {
+  player.x = canvas.width / 2;
+  player.y = canvas.height / 2;
+  player.dx = 0;
+  player.dy = 0;
+
+  enemy.x = Math.random() * canvas.width;
+  enemy.y = Math.random() * canvas.height;
+
+  enemy2.active = currentLevel >= 5;
+  if (enemy2.active) {
+    enemy2.x = Math.random() * canvas.width;
+    enemy2.y = Math.random() * canvas.height;
+  }
+
+  randomizeCoin();
+  megaCoin.active = false;
+  shieldOrb.active = false;
+}
+
 function startGame() {
   document.getElementById("menu").style.display = "none";
+  document.getElementById("shop").style.display = "none";
+  document.getElementById("settings").style.display = "none";
+  document.getElementById("howto").style.display = "none";
   document.getElementById("ui").style.display = "block";
   document.getElementById("controls").style.display = "block";
-  
-  gameLoop();
-  startTimer();
+  boosterBtn.style.display = "flex";
+  pauseBtn.style.display = "block";
+  homeBtn.style.display = "block";
+  levelBar.style.display = "block";
+
+  hintsEl.style.display = hintsEnabled ? "block" : "none";
+
+  currentLevel = 1;
+  totalCoins = 0;
+  combo = 1;
+  boostEnergy = 1;
+  hasShield = false;
+  boosting = false;
+  paused = false;
+  dangerFactor = 0;
+  shakeTimer = 0;
+  trail.length = 0;
+  particles.length = 0;
+
+  applyLevelSettings();
+  updateShieldUI();
+  updateBoostUI();
+  updateComboUI();
+  resetPositions();
+
+  initAudio();
+  if (audioCtx && audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+  stopMusic();
+  startMusic();
+
+  gameActive = true;
+  if (!loopStarted) {
+    loopStarted = true;
+    requestAnimationFrame(gameLoop);
+  }
+  showCenterText("Level 1");
 }
 
 function openShop() {
-  document.getElementById("shop").style.display = "flex";
   document.getElementById("menu").style.display = "none";
+  document.getElementById("shop").style.display = "flex";
+  document.getElementById("settings").style.display = "none";
+  document.getElementById("howto").style.display = "none";
 }
 
 function closeShop() {
@@ -173,121 +738,864 @@ function closeShop() {
   document.getElementById("menu").style.display = "flex";
 }
 
+function openSettings() {
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("shop").style.display = "none";
+  document.getElementById("settings").style.display = "flex";
+  document.getElementById("howto").style.display = "none";
+}
+
+function closeSettings() {
+  document.getElementById("settings").style.display = "none";
+  document.getElementById("menu").style.display = "flex";
+}
+
+function openHowto() {
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("shop").style.display = "none";
+  document.getElementById("settings").style.display = "none";
+  document.getElementById("howto").style.display = "flex";
+}
+
+function closeHowto() {
+  document.getElementById("howto").style.display = "none";
+  document.getElementById("menu").style.display = "flex";
+}
+
+function goToMainMenu() {
+  if (gameActive) {
+    recordRunEnd(currentLevel, totalCoins);
+  }
+  gameActive = false;
+  paused = false;
+  disableBoost();
+  stopMusic();
+  document.getElementById("ui").style.display = "none";
+  document.getElementById("controls").style.display = "none";
+  boosterBtn.style.display = "none";
+  pauseBtn.style.display = "none";
+  homeBtn.style.display = "none";
+  levelBar.style.display = "none";
+  hintsEl.style.display = "none";
+  centerTextEl.style.opacity = "0";
+  document.getElementById("shop").style.display = "none";
+  document.getElementById("settings").style.display = "none";
+  document.getElementById("howto").style.display = "none";
+  document.getElementById("menu").style.display = "flex";
+}
+
+homeBtn.addEventListener("click", goToMainMenu);
+
 function selectSkin(color) {
   playerColor = color;
   alert("Skin selected!");
 }
 
-/* ===========================
-        MOBILE CONTROLS
-=========================== */
-document.getElementById("left").ontouchstart = () => player.dx = -player.speed;
-document.getElementById("right").ontouchstart = () => player.dx = player.speed;
-document.getElementById("up").ontouchstart = () => player.dy = -player.speed;
-document.getElementById("down").ontouchstart = () => player.dy = player.speed;
+/* SETTINGS APPLY */
+function setDifficulty(mode) {
+  difficultyMode = mode;
+  if (gameActive) applyLevelSettings();
+}
 
-document.getElementById("left").ontouchend =
-document.getElementById("right").ontouchend =
-document.getElementById("up").ontouchend =
-document.getElementById("down").ontouchend =
-() => { player.dx = 0; player.dy = 0; };
+function setTheme(mode) {
+  themeMode = mode;
+}
+
+function setMusic(on) {
+  musicEnabled = on;
+  if (!on) {
+    stopMusic();
+  } else if (gameActive && !paused) {
+    initAudio();
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    stopMusic();
+    startMusic();
+  }
+}
+
+function setSfx(on) {
+  sfxEnabled = on;
+}
+
+function setJoystickSize(size) {
+  joystickSize = size;
+  applyJoystickSize();
+}
+
+function setJoystickSide(side) {
+  joystickSide = side;
+  applyJoystickPosition();
+}
+
+function setPlayerSize(mode) {
+  playerSizeMode = mode;
+  applyPlayerSize();
+}
+
+function setPlayerShape(mode) {
+  playerShapeMode = mode;
+}
+
+function setEffects(on) {
+  effectsEnabled = on;
+}
+
+function setColorblind(on) {
+  colorblindMode = on;
+}
+
+function setHudSize(mode) {
+  hudSizeMode = mode;
+  document.body.classList.remove("hud-small", "hud-big");
+  if (mode === "small") document.body.classList.add("hud-small");
+  else if (mode === "big") document.body.classList.add("hud-big");
+}
+
+function setButtonSize(mode) {
+  buttonSizeMode = mode;
+  document.body.classList.remove("buttons-big");
+  if (mode === "big") document.body.classList.add("buttons-big");
+}
+
+function setHints(on) {
+  hintsEnabled = on;
+  if (gameActive) {
+    hintsEl.style.display = on ? "block" : "none";
+  }
+}
 
 /* ===========================
-        KEYBOARD CONTROLS
+      JOYSTICK CONTROLS
 =========================== */
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") player.dx = -player.speed;
-  if (e.key === "ArrowRight") player.dx = player.speed;
-  if (e.key === "ArrowUp") player.dy = -player.speed;
-  if (e.key === "ArrowDown") player.dy = player.speed;
+const joystickBase = document.getElementById("joystick-base");
+const joystickKnob = document.getElementById("joystick-knob");
+const controls = document.getElementById("controls");
+
+const JOY_BASE_SIZE = 130;
+const JOY_KNOB_SIZE = 60;
+const JOY_RADIUS = (JOY_BASE_SIZE - JOY_KNOB_SIZE) / 2;
+
+function applyJoystickSize() {
+  let scale = 1;
+  if (joystickSize === "small") scale = 0.8;
+  if (joystickSize === "large") scale = 1.25;
+  controls.style.transform = "scale(" + scale + ")";
+}
+
+function applyJoystickPosition() {
+  if (joystickSide === "left") {
+    controls.style.left = "30px";
+    controls.style.right = "auto";
+  } else {
+    controls.style.left = "auto";
+    controls.style.right = "30px";
+  }
+}
+applyJoystickSize();
+applyJoystickPosition();
+
+function setKnobToCenter() {
+  joystickKnob.style.left = (JOY_BASE_SIZE - JOY_KNOB_SIZE) / 2 + "px";
+  joystickKnob.style.top = (JOY_BASE_SIZE - JOY_KNOB_SIZE) / 2 + "px";
+}
+setKnobToCenter();
+
+function handleJoystickMove(clientX, clientY) {
+  const rect = joystickBase.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+
+  let dx = clientX - centerX;
+  let dy = clientY - centerY;
+
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist === 0) {
+    player.dx = 0;
+    player.dy = 0;
+    setKnobToCenter();
+    return;
+  }
+
+  const clampedDist = Math.min(dist, JOY_RADIUS);
+  const normX = dx / dist;
+  const normY = dy / dist;
+
+  const offsetX = normX * clampedDist;
+  const offsetY = normY * clampedDist;
+
+  joystickKnob.style.left =
+    JOY_BASE_SIZE / 2 - JOY_KNOB_SIZE / 2 + offsetX + "px";
+  joystickKnob.style.top =
+    JOY_BASE_SIZE / 2 - JOY_KNOB_SIZE / 2 + offsetY + "px";
+
+  const magnitude = clampedDist / JOY_RADIUS;
+  const effectiveSpeed = player.speed;
+  player.dx = normX * effectiveSpeed * magnitude;
+  player.dy = normY * effectiveSpeed * magnitude;
+}
+
+joystickBase.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  handleJoystickMove(touch.clientX, touch.clientY);
 });
-
-document.addEventListener("keyup", () => {
+joystickBase.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  handleJoystickMove(touch.clientX, touch.clientY);
+});
+joystickBase.addEventListener("touchend", (e) => {
+  e.preventDefault();
   player.dx = 0;
   player.dy = 0;
+  setKnobToCenter();
+});
+joystickBase.addEventListener("touchcancel", (e) => {
+  e.preventDefault();
+  player.dx = 0;
+  player.dy = 0;
+  setKnobToCenter();
 });
 
 /* ===========================
-         GAME MECHANICS
+      KEYBOARD CONTROLS
+=========================== */
+document.addEventListener("keydown", (e) => {
+  const key = e.key;
+  if (key === "ArrowLeft" || key === "a") player.dx = -player.speed;
+  if (key === "ArrowRight" || key === "d") player.dx = player.speed;
+  if (key === "ArrowUp" || key === "w") player.dy = -player.speed;
+  if (key === "ArrowDown" || key === "s") player.dy = player.speed;
+
+  if (key === "p" || key === "P") togglePause();
+});
+document.addEventListener("keyup", (e) => {
+  const key = e.key;
+  if (["ArrowLeft", "ArrowRight", "a", "d"].includes(key)) player.dx = 0;
+  if (["ArrowUp", "ArrowDown", "w", "s"].includes(key)) player.dy = 0;
+});
+
+/* ===========================
+        BOOSTER LOGIC
+=========================== */
+function updateBoostUI() {
+  boostEl.textContent = "Boost: " + Math.round(boostEnergy * 100) + "%";
+}
+
+function enableBoost() {
+  if (boosting) return;
+  if (boostEnergy <= 0.05) return;
+  boosting = true;
+  boosterBtn.classList.add("active");
+  player.speed *= BOOST_MULT;
+  player.dx *= BOOST_MULT;
+  player.dy *= BOOST_MULT;
+  playBeep(1400, 0.1, "sawtooth", 0.25);
+}
+
+function disableBoost() {
+  if (!boosting) return;
+  boosting = false;
+  boosterBtn.classList.remove("active");
+  player.speed /= BOOST_MULT;
+  player.dx /= BOOST_MULT;
+  player.dy /= BOOST_MULT;
+}
+
+boosterBtn.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  enableBoost();
+});
+boosterBtn.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  disableBoost();
+});
+boosterBtn.addEventListener("touchcancel", (e) => {
+  e.preventDefault();
+  disableBoost();
+});
+boosterBtn.addEventListener("mousedown", (e) => {
+  e.preventDefault();
+  enableBoost();
+});
+document.addEventListener("mouseup", () => {
+  disableBoost();
+});
+
+/* ===========================
+        SHIELD LOGIC
+=========================== */
+function spawnShield() {
+  shieldOrb.x = Math.random() * (canvas.width - 60) + 30;
+  shieldOrb.y = Math.random() * (canvas.height - 60) + 30;
+  shieldOrb.active = true;
+}
+
+function updateShieldUI() {
+  shieldEl.textContent = hasShield ? "Shield: READY" : "Shield: —";
+}
+
+function drawShield() {
+  if (shieldOrb.active) {
+    ctx.strokeStyle = "rgba(0,200,255,0.8)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(shieldOrb.x, shieldOrb.y, shieldOrb.size, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (hasShield) {
+    ctx.strokeStyle = "rgba(0,200,255,0.9)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(
+      player.x + player.size / 2,
+      player.y + player.size / 2,
+      player.size + 10,
+      0,
+      Math.PI * 2
+    );
+    ctx.stroke();
+  }
+}
+
+/* ===========================
+    TRAIL & PARTICLES & COMBO
+=========================== */
+function addTrail() {
+  if (!effectsEnabled) return;
+  trail.push({
+    x: player.x + player.size / 2,
+    y: player.y + player.size / 2,
+    life: 1
+  });
+  if (trail.length > 40) trail.shift();
+}
+
+function updateAndDrawTrail() {
+  if (!effectsEnabled) return;
+  for (let t of trail) {
+    t.life *= 0.92;
+    ctx.fillStyle = "rgba(255,255,255," + t.life * 0.2 + ")";
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, 10 * t.life, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function spawnCoinParticles(x, y, color = "yellow") {
+  if (!effectsEnabled) return;
+  for (let i = 0; i < 12; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 3 + 1;
+    particles.push({
+      x,
+      y,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      life: 1,
+      color
+    });
+  }
+}
+
+function updateAndDrawParticles() {
+  if (!effectsEnabled) return;
+  for (let p of particles) {
+    p.x += p.dx;
+    p.y += p.dy;
+    p.life *= 0.9;
+    let col = "rgba(255,255,0," + p.life + ")";
+    if (p.color !== "yellow") col = p.color.replace("ALPHA", p.life);
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3 + 2 * p.life, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  for (let i = particles.length - 1; i >= 0; i--) {
+    if (particles[i].life < 0.05) particles.splice(i, 1);
+  }
+}
+
+function updateComboUI() {
+  comboEl.textContent = "Combo: x" + combo;
+}
+
+function registerCoinCollect(mult) {
+  const now = Date.now();
+  if (now - lastCoinTime < 2500) {
+    combo++;
+    playBeep(1100, 0.1, "square", 0.18);
+  } else {
+    combo = 1;
+  }
+  lastCoinTime = now;
+  updateComboUI();
+}
+
+/* ===========================
+        UTILS
+=========================== */
+function randomizeCoin() {
+  coin.x = Math.random() * (canvas.width - 40) + 20;
+  coin.y = Math.random() * (canvas.height - 40) + 20;
+}
+
+function spawnMegaCoin() {
+  megaCoin.x = Math.random() * (canvas.width - 80) + 40;
+  megaCoin.y = Math.random() * (canvas.height - 80) + 40;
+  megaCoin.active = true;
+}
+
+function showCenterText(text) {
+  overlayTimer = 90;
+  centerTextEl.textContent = text;
+  centerTextEl.style.opacity = "1";
+}
+
+function updateLevelBar() {
+  const pct = Math.max(0, Math.min(1, levelCoins / currentCoinGoal));
+  levelBarFill.style.width = pct * 100 + "%";
+}
+
+/* ===========================
+      GAME LOOP HELPERS
 =========================== */
 function movePlayer() {
   player.x += player.dx;
   player.y += player.dy;
+
+  if (player.x < 0) player.x = 0;
+  if (player.y < 0) player.y = 0;
+  if (player.x + player.size > canvas.width) {
+    player.x = canvas.width - player.size;
+  }
+  if (player.y + player.size > canvas.height) {
+    player.y = canvas.height - player.size;
+  }
 }
 
-function moveEnemy() {
-  let angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-  enemy.x += Math.cos(angle) * enemy.speed;
-  enemy.y += Math.sin(angle) * enemy.speed;
+function moveEnemies() {
+  const list = [enemy];
+  if (enemy2.active) list.push(enemy2);
+
+  for (let e of list) {
+    const angle = Math.atan2(player.y - e.y, player.x - e.x);
+    e.x += Math.cos(angle) * e.speed;
+    e.y += Math.sin(angle) * e.speed;
+  }
 }
 
-function draw() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Player
-  ctx.fillStyle = playerColor;
-  ctx.fillRect(player.x, player.y, player.size, player.size);
-
-  // Coin
-  ctx.fillStyle = "yellow";
-  ctx.beginPath();
-  ctx.arc(coin.x, coin.y, coin.size, 0, Math.PI*2);
-  ctx.fill();
-
-  // Enemy
-  ctx.fillStyle = "red";
-  ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+function applyCoinMagnet() {
+  if (combo < 4) return;
+  const targetX = player.x + player.size / 2;
+  const targetY = player.y + player.size / 2;
+  const dx = targetX - coin.x;
+  const dy = targetY - coin.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 220 && dist > 1) {
+    coin.x += (dx / dist) * 2;
+    coin.y += (dy / dist) * 2;
+  }
 }
 
-function checkCollisions() {
-  let dist = Math.hypot(player.x - coin.x, player.y - coin.y);
-  if (dist < player.size) {
-    score++;
-    document.getElementById("score").innerText = "Score: " + score;
+/* ===========================
+     COLLISIONS & LEVELS
+=========================== */
+function handleCollisions() {
+  applyCoinMagnet();
 
-    // Harder enemy each coin
-    enemy.speed += 0.2;
+  // player–coin
+  const distCoin = Math.hypot(
+    player.x + player.size / 2 - coin.x,
+    player.y + player.size / 2 - coin.y
+  );
+  if (distCoin < player.size / 2 + coin.size) {
+    totalCoins++;
+    levelCoins++;
+    registerCoinCollect(1);
+    scoreEl.textContent = "Total coins: " + totalCoins;
+    levelCoinsEl.textContent =
+      "Level coins: " + levelCoins + " / " + currentCoinGoal;
+    updateLevelBar();
 
-    coin.x = Math.random()*canvas.width;
-    coin.y = Math.random()*canvas.height;
+    spawnCoinParticles(coin.x, coin.y, "rgba(255,255,0,ALPHA)");
+    playBeep(880, 0.12, "square", 0.18);
 
-    // Level Up
-    if (score % 10 === 0) {
-      level++;
-      document.getElementById("level").innerText = "Level: " + level;
-      player.speed += 0.5;
+    randomizeCoin();
+
+    enemy.speed += 0.12;
+    if (enemy2.active) enemy2.speed += 0.12;
+
+    if (!shieldOrb.active && !hasShield && Math.random() < 0.25) {
+      spawnShield();
+    }
+    if (!megaCoin.active && Math.random() < 0.18) {
+      spawnMegaCoin();
+    }
+
+    if (levelCoins >= currentCoinGoal) {
+      levelUp();
     }
   }
 
-  let hit = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-  if (hit < player.size + enemy.size / 2) {
-    alert("Nahuel died 💀 Final Score: " + score);
-    location.reload();
+  // player–mega coin
+  if (megaCoin.active) {
+    const dMega = Math.hypot(
+      player.x + player.size / 2 - megaCoin.x,
+      player.y + player.size / 2 - megaCoin.y
+    );
+    if (dMega < player.size / 2 + megaCoin.size) {
+      megaCoin.active = false;
+      totalCoins += 3;
+      levelCoins += 3;
+      registerCoinCollect(3);
+      scoreEl.textContent = "Total coins: " + totalCoins;
+      levelCoinsEl.textContent =
+        "Level coins: " + levelCoins + " / " + currentCoinGoal;
+      updateLevelBar();
+
+      spawnCoinParticles(
+        megaCoin.x,
+        megaCoin.y,
+        "rgba(0,255,255,ALPHA)"
+      );
+      playBeep(1200, 0.15, "triangle", 0.25);
+      shakeTimer = 18;
+
+      if (levelCoins >= currentCoinGoal) {
+        levelUp();
+      }
+    }
+  }
+
+  // player–shield
+  if (shieldOrb.active) {
+    const distShield = Math.hypot(
+      player.x + player.size / 2 - shieldOrb.x,
+      player.y + player.size / 2 - shieldOrb.y
+    );
+    if (distShield < player.size / 2 + shieldOrb.size) {
+      shieldOrb.active = false;
+      hasShield = true;
+      updateShieldUI();
+      playBeep(1200, 0.15, "triangle", 0.25);
+    }
+  }
+
+  // player–enemies
+  const enemiesList = [enemy];
+  if (enemy2.active) enemiesList.push(enemy2);
+
+  for (let e of enemiesList) {
+    const distEnemy = Math.hypot(
+      player.x + player.size / 2 - (e.x + e.size / 2),
+      player.y + player.size / 2 - (e.y + e.size / 2)
+    );
+    if (distEnemy < (player.size + e.size) / 2) {
+      if (hasShield) {
+        hasShield = false;
+        updateShieldUI();
+        playBeep(300, 0.2, "sine", 0.3);
+        const angle = Math.atan2(
+          e.y + e.size / 2 - (player.y + player.size / 2),
+          e.x + e.size / 2 - (player.x + player.size / 2)
+        );
+        e.x += Math.cos(angle) * 80;
+        e.y += Math.sin(angle) * 80;
+      } else {
+        playBeep(150, 0.25, "sine", 0.25);
+        playBeep(110, 0.25, "square", 0.2);
+        const reached = currentLevel;
+        const coinsAtDeath = totalCoins;
+        recordRunEnd(reached, coinsAtDeath);
+        resetToLevelOne();
+        break;
+      }
+    }
   }
 }
 
+function levelUp() {
+  if (currentLevel < MAX_LEVEL) {
+    currentLevel++;
+    disableBoost();
+    applyLevelSettings();
+    resetPositions();
+    stopMusic();
+    startMusic();
+    showCenterText("Level " + currentLevel);
+    playBeep(1320, 0.18, "sawtooth", 0.25);
+  } else {
+    disableBoost();
+    showCenterText("YOU WIN!");
+    playBeep(1500, 0.25, "square", 0.25);
+    playBeep(1800, 0.3, "triangle", 0.25);
+    const finalLevel = MAX_LEVEL;
+    const finalCoins = totalCoins;
+    recordRunEnd(finalLevel, finalCoins);
+    setTimeout(() => {
+      alert("You beat all 10 levels! Total coins: " + finalCoins);
+      startGame();
+    }, 600);
+  }
+}
+
+function resetToLevelOne() {
+  currentLevel = 1;
+  totalCoins = 0;
+  levelCoins = 0;
+  combo = 1;
+  updateComboUI();
+  hasShield = false;
+  shieldOrb.active = false;
+  boostEnergy = 1;
+  disableBoost();
+  applyLevelSettings();
+  updateShieldUI();
+  updateBoostUI();
+  resetPositions();
+  stopMusic();
+  startMusic();
+  showCenterText("Back to Level 1");
+  alert("You died! Back to Level 1.");
+}
+
+/* ===========================
+           DRAW
+=========================== */
+function drawBackground() {
+  const cfg = levelConfigs[currentLevel - 1];
+  let sat = 45;
+  let light = 10;
+  if (themeMode === "neon") {
+    sat = 70;
+    light = 12;
+  } else if (themeMode === "pastel") {
+    sat = 45;
+    light = 18;
+  }
+  ctx.fillStyle = "hsl(" + cfg.hue + "," + sat + "%," + light + "%)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = "rgba(255,255,255,0.03)";
+  for (let x = 0; x < canvas.width; x += 40) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y < canvas.height; y += 40) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+
+  if (effectsEnabled && dangerFactor > 0.01) {
+    ctx.fillStyle = "rgba(255,0,0," + 0.25 * dangerFactor + ")";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+function drawShadows() {
+  if (!effectsEnabled) return;
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  // player shadow
+  ctx.beginPath();
+  ctx.ellipse(
+    player.x + player.size / 2,
+    player.y + player.size,
+    player.size / 1.8,
+    player.size / 4,
+    0,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  // enemy shadows
+  ctx.beginPath();
+  ctx.ellipse(
+    enemy.x + enemy.size / 2,
+    enemy.y + enemy.size,
+    enemy.size / 2,
+    enemy.size / 5,
+    0,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  if (enemy2.active) {
+    ctx.beginPath();
+    ctx.ellipse(
+      enemy2.x + enemy2.size / 2,
+      enemy2.y + enemy2.size,
+      enemy2.size / 2,
+      enemy2.size / 5,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
+}
+
+function drawPlayer() {
+  const cx = player.x + player.size / 2;
+  const cy = player.y + player.size / 2;
+
+  ctx.fillStyle = playerColor;
+  if (playerShapeMode === "circle") {
+    ctx.beginPath();
+    ctx.arc(cx, cy, player.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (playerShapeMode === "diamond") {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - player.size / 2);
+    ctx.lineTo(cx + player.size / 2, cy);
+    ctx.lineTo(cx, cy + player.size / 2);
+    ctx.lineTo(cx - player.size / 2, cy);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+  }
+
+  if (effectsEnabled && dangerFactor > 0.35 && !hasShield) {
+    ctx.strokeStyle = "rgba(255,0,0," + dangerFactor * 0.6 + ")";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, player.size * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function drawGame() {
+  drawBackground();
+  updateAndDrawTrail();
+  updateAndDrawParticles();
+  drawShadows();
+
+  // mega coin
+  if (megaCoin.active) {
+    ctx.fillStyle = colorblindMode ? "#ffffff" : "#00ffff";
+    ctx.beginPath();
+    ctx.arc(megaCoin.x, megaCoin.y, megaCoin.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // coin
+  ctx.fillStyle = colorblindMode ? "#ffffff" : "yellow";
+  ctx.beginPath();
+  ctx.arc(coin.x, coin.y, coin.size, 0, Math.PI * 2);
+  ctx.fill();
+
+  // enemies
+  ctx.fillStyle = colorblindMode ? "#ff00ff" : "red";
+  ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+  if (enemy2.active) {
+    ctx.fillStyle = colorblindMode ? "#00ff00" : "#ff6666";
+    ctx.fillRect(enemy2.x, enemy2.y, enemy2.size, enemy2.size);
+  }
+
+  drawPlayer();
+  drawShield();
+}
+
+/* ===========================
+         PAUSE
+=========================== */
+function togglePause() {
+  if (!gameActive) return;
+  paused = !paused;
+  pauseBtn.textContent = paused ? "Resume" : "Pause";
+  if (!paused && audioCtx && audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+  if (!paused && musicEnabled && !musicOsc) {
+    startMusic();
+  }
+  if (paused) {
+    stopMusic();
+    showCenterText("Paused");
+  } else {
+    showCenterText("Level " + currentLevel);
+  }
+}
+
+pauseBtn.addEventListener("click", togglePause);
+
+/* ===========================
+          MAIN LOOP
+=========================== */
 function gameLoop() {
-  movePlayer();
-  moveEnemy();
-  draw();
-  checkCollisions();
+  ctx.save();
+  if (shakeTimer > 0) {
+    shakeTimer--;
+    const mag = shakeTimer * 0.3;
+    const ox = (Math.random() - 0.5) * mag;
+    const oy = (Math.random() - 0.5) * mag;
+    ctx.translate(ox, oy);
+  }
+
+  if (gameActive && !paused) {
+    movePlayer();
+    moveEnemies();
+    addTrail();
+    handleCollisions();
+
+    if (boosting) {
+      boostEnergy -= 0.01;
+      if (boostEnergy <= 0) {
+        boostEnergy = 0;
+        disableBoost();
+      }
+    } else {
+      boostEnergy = Math.min(1, boostEnergy + 0.004);
+    }
+    updateBoostUI();
+
+    let closest = Infinity;
+    const list = [enemy];
+    if (enemy2.active) list.push(enemy2);
+    for (let e of list) {
+      const d = Math.hypot(
+        player.x + player.size / 2 - (e.x + e.size / 2),
+        player.y + player.size / 2 - (e.y + e.size / 2)
+      );
+      if (d < closest) closest = d;
+    }
+    let targetDanger = 0;
+    const threshold = 140;
+    if (closest < threshold) {
+      targetDanger = 1 - closest / threshold;
+    }
+    dangerFactor = dangerFactor * 0.85 + targetDanger * 0.15;
+
+    if (overlayTimer > 0) {
+      overlayTimer--;
+      if (overlayTimer <= 0) {
+        centerTextEl.style.opacity = "0";
+      }
+    }
+  }
+
+  drawGame();
+  ctx.restore();
   requestAnimationFrame(gameLoop);
 }
 
 /* ===========================
-            TIMER
+       INIT BEST STATS
 =========================== */
-function startTimer() {
-  setInterval(() => {
-    timeLeft--;
-    document.getElementById("timer").innerText = "Time: " + timeLeft;
+loadBestStats();
+updateBestStatsUI();
 
-    if (timeLeft <= 0) {
-      alert("Time's up! Final Score: " + score);
-      location.reload();
-    }
-  }, 1000);
-}
+/* Start idle loop */
+requestAnimationFrame(gameLoop);
 </script>
 
 </body>
