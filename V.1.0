@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nahuel Deluxe</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #0a0a0a;
+    font-family: Arial, sans-serif;
+    color: white;
+    touch-action: none;
+  }
+  #ui {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 22px;
+    display: none;
+  }
+  #timer {
+    margin-top: 8px;
+  }
+
+  /* MENU */
+  #menu, #shop {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  button {
+    padding: 12px 22px;
+    margin: 8px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 6px;
+    background: #2a2a2a;
+    color: white;
+    border: none;
+  }
+  .skin {
+    width: 60px;
+    height: 60px;
+    margin: 10px;
+    display: inline-block;
+    border: 3px solid white;
+    cursor: pointer;
+  }
+
+  /* MOBILE CONTROLS */
+  #controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: none;
+  }
+  .btn {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    margin: 5px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Canvas -->
+<canvas id="game"></canvas>
+
+<!-- UI -->
+<div id="ui">
+  <div id="score">Score: 0</div>
+  <div id="timer">Time: 20</div>
+  <div id="level">Level: 1</div>
+</div>
+
+<!-- MENU -->
+<div id="menu">
+  <h1>Nahuel Deluxe</h1>
+  <button onclick="startGame()">Start</button>
+  <button onclick="openShop()">Shop</button>
+</div>
+
+<!-- SHOP -->
+<div id="shop" style="display:none;">
+  <h2>Choose a skin</h2>
+  <div>
+    <div class="skin" style="background:cyan;" onclick="selectSkin('cyan')"></div>
+    <div class="skin" style="background:lime;" onclick="selectSkin('lime')"></div>
+    <div class="skin" style="background:orange;" onclick="selectSkin('orange')"></div>
+    <div class="skin" style="background:#ff66ff;" onclick="selectSkin('#ff66ff')"></div>
+  </div>
+  <button onclick="closeShop()">Back</button>
+</div>
+
+<!-- MOBILE TOUCH CONTROLS -->
+<div id="controls">
+  <div style="display:flex;">
+    <div class="btn" id="left"></div>
+    <div class="btn" id="right"></div>
+  </div>
+  <div style="display:flex;margin-left:60px;">
+    <div class="btn" id="up"></div>
+    <div class="btn" id="down"></div>
+  </div>
+</div>
+
+<script>
+/* ===========================
+      CANVAS + BASE SETUP
+=========================== */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+let score = 0;
+let timeLeft = 20;
+let level = 1;
+let playerColor = "cyan"; // default skin
+
+/* ===========================
+      GAME OBJECTS
+=========================== */
+const player = {
+  x: canvas.width/2,
+  y: canvas.height/2,
+  size: 30,
+  dx: 0,
+  dy: 0,
+  speed: 6
+};
+
+const coin = {
+  x: Math.random()*canvas.width,
+  y: Math.random()*canvas.height,
+  size: 20
+};
+
+const enemy = {
+  x: Math.random()*canvas.width,
+  y: Math.random()*canvas.height,
+  size: 35,
+  speed: 3
+};
+
+/* ===========================
+       MENU + SHOP
+=========================== */
+function startGame() {
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("ui").style.display = "block";
+  document.getElementById("controls").style.display = "block";
+  
+  gameLoop();
+  startTimer();
+}
+
+function openShop() {
+  document.getElementById("shop").style.display = "flex";
+  document.getElementById("menu").style.display = "none";
+}
+
+function closeShop() {
+  document.getElementById("shop").style.display = "none";
+  document.getElementById("menu").style.display = "flex";
+}
+
+function selectSkin(color) {
+  playerColor = color;
+  alert("Skin selected!");
+}
+
+/* ===========================
+        MOBILE CONTROLS
+=========================== */
+document.getElementById("left").ontouchstart = () => player.dx = -player.speed;
+document.getElementById("right").ontouchstart = () => player.dx = player.speed;
+document.getElementById("up").ontouchstart = () => player.dy = -player.speed;
+document.getElementById("down").ontouchstart = () => player.dy = player.speed;
+
+document.getElementById("left").ontouchend =
+document.getElementById("right").ontouchend =
+document.getElementById("up").ontouchend =
+document.getElementById("down").ontouchend =
+() => { player.dx = 0; player.dy = 0; };
+
+/* ===========================
+        KEYBOARD CONTROLS
+=========================== */
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") player.dx = -player.speed;
+  if (e.key === "ArrowRight") player.dx = player.speed;
+  if (e.key === "ArrowUp") player.dy = -player.speed;
+  if (e.key === "ArrowDown") player.dy = player.speed;
+});
+
+document.addEventListener("keyup", () => {
+  player.dx = 0;
+  player.dy = 0;
+});
+
+/* ===========================
+         GAME MECHANICS
+=========================== */
+function movePlayer() {
+  player.x += player.dx;
+  player.y += player.dy;
+}
+
+function moveEnemy() {
+  let angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+  enemy.x += Math.cos(angle) * enemy.speed;
+  enemy.y += Math.sin(angle) * enemy.speed;
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Player
+  ctx.fillStyle = playerColor;
+  ctx.fillRect(player.x, player.y, player.size, player.size);
+
+  // Coin
+  ctx.fillStyle = "yellow";
+  ctx.beginPath();
+  ctx.arc(coin.x, coin.y, coin.size, 0, Math.PI*2);
+  ctx.fill();
+
+  // Enemy
+  ctx.fillStyle = "red";
+  ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+}
+
+function checkCollisions() {
+  let dist = Math.hypot(player.x - coin.x, player.y - coin.y);
+  if (dist < player.size) {
+    score++;
+    document.getElementById("score").innerText = "Score: " + score;
+
+    // Harder enemy each coin
+    enemy.speed += 0.2;
+
+    coin.x = Math.random()*canvas.width;
+    coin.y = Math.random()*canvas.height;
+
+    // Level Up
+    if (score % 10 === 0) {
+      level++;
+      document.getElementById("level").innerText = "Level: " + level;
+      player.speed += 0.5;
+    }
+  }
+
+  let hit = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+  if (hit < player.size + enemy.size / 2) {
+    alert("Nahuel died 💀 Final Score: " + score);
+    location.reload();
+  }
+}
+
+function gameLoop() {
+  movePlayer();
+  moveEnemy();
+  draw();
+  checkCollisions();
+  requestAnimationFrame(gameLoop);
+}
+
+/* ===========================
+            TIMER
+=========================== */
+function startTimer() {
+  setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").innerText = "Time: " + timeLeft;
+
+    if (timeLeft <= 0) {
+      alert("Time's up! Final Score: " + score);
+      location.reload();
+    }
+  }, 1000);
+}
+</script>
+
+</body>
+</html>
